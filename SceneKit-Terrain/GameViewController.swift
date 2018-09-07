@@ -7,29 +7,65 @@
 //
 
 import SceneKit
+import SpriteKit
 import QuartzCore
 
-class GameViewController: NSViewController {
+class GameViewController: NSViewController, GameInputDelegate {
+    
+        
+    @IBOutlet var gameView: GameView!
+    let scene = SCNScene()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        // retrieve the SCNView
+        let scnView = self.view as! GameView
+        scnView.eventsDelegate = self
+        scnView.allowsCameraControl = true
+        scnView.showsStatistics = true
+        scnView.backgroundColor = NSColor.black
         
+        // configure the scene
+        scene.background.contents = "art.scnassets/textures/img_skybox.jpg"
+        scnView.scene = scene
+
+        self.createOverlayScene()
+        self.configureCameraAndLighting()
+        self.addTerrain()
+    }
+    
+    private func addTerrain() {
+        let material = SCNMaterial()
+        material.diffuse.contents = "art.scnassets/textures/grass.jpg"
+        material.isDoubleSided = false
+        material.isLitPerPixel = true
+        material.diffuse.magnificationFilter = .none
+        material.diffuse.wrapS = .repeat
+        material.diffuse.wrapT = .repeat
+        material.diffuse.contentsTransform = SCNMatrix4MakeScale(CGFloat(16), CGFloat(16), 1)
+        material.diffuse.intensity = 1.0
+        
+        let terrain = TerrainNode(heightMap: "art.scnassets/textures/heightmap.png", material:material)
+        terrain.position = SCNVector3Make(0, 0, 0)
+        scene.rootNode.addChildNode(terrain)
+    }
+    
+    private func configureCameraAndLighting() {
         // create and add a camera to the scene
         let cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
+        cameraNode.camera!.zFar = 400
         scene.rootNode.addChildNode(cameraNode)
         
         // place the camera
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
+        cameraNode.position = SCNVector3(x: 128, y: 10, z: 128)
         
         // create and add a light to the scene
         let lightNode = SCNNode()
         lightNode.light = SCNLight()
         lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
+        lightNode.position = SCNVector3(x: 128, y: 20, z: 10)
         scene.rootNode.addChildNode(lightNode)
         
         // create and add an ambient light to the scene
@@ -39,67 +75,91 @@ class GameViewController: NSViewController {
         ambientLightNode.light!.color = NSColor.darkGray
         scene.rootNode.addChildNode(ambientLightNode)
         
-        // retrieve the ship node
-        let ship = scene.rootNode.childNode(withName: "ship", recursively: true)!
-        
-        // animate the 3d object
-        ship.runAction(SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: 2, z: 0, duration: 1)))
-        
-        // retrieve the SCNView
-        let scnView = self.view as! SCNView
-        
-        // set the scene to the view
-        scnView.scene = scene
-        
-        // allows the user to manipulate the camera
-        scnView.allowsCameraControl = true
-        
-        // show statistics such as fps and timing information
-        scnView.showsStatistics = true
-        
-        // configure the view
-        scnView.backgroundColor = NSColor.black
-        
-        // Add a click gesture recognizer
-        let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:)))
-        var gestureRecognizers = scnView.gestureRecognizers
-        gestureRecognizers.insert(clickGesture, at: 0)
-        scnView.gestureRecognizers = gestureRecognizers
     }
     
-    @objc
-    func handleClick(_ gestureRecognizer: NSGestureRecognizer) {
-        // retrieve the SCNView
+    private func createOverlayScene() {
+        //setup overlay
         let scnView = self.view as! SCNView
+        let overlayScene = SKScene(size: scnView.bounds.size);
+        scnView.overlaySKScene = overlayScene;
         
-        // check what nodes are clicked
-        let p = gestureRecognizer.location(in: scnView)
-        let hitResults = scnView.hitTest(p, options: [:])
-        // check that we clicked on at least one object
-        if hitResults.count > 0 {
-            // retrieved the first clicked object
-            let result = hitResults[0]
-            
-            // get its material
-            let material = result.node.geometry!.firstMaterial!
-            
-            // highlight it
-            SCNTransaction.begin()
-            SCNTransaction.animationDuration = 0.5
-            
-            // on completion - unhighlight
-            SCNTransaction.completionBlock = {
-                SCNTransaction.begin()
-                SCNTransaction.animationDuration = 0.5
-                
-                material.emission.contents = NSColor.black
-                
-                SCNTransaction.commit()
+        var node = SKSpriteNode(imageNamed:"art.scnassets/textures/video_camera.png")
+        node.position = CGPoint(x: overlayScene.size.width * 0.9, y: overlayScene.size.height*0.9)
+        node.name = "cameraNode"
+        node.xScale = 0.5
+        node.yScale = 0.5
+        overlayScene.addChild(node)
+        
+        node = SKSpriteNode(imageNamed:"art.scnassets/textures/tool.png")
+        node.position = CGPoint(x: overlayScene.size.width * 0.8, y: overlayScene.size.height*0.9)
+        node.name = "toolNode"
+        overlayScene.addChild(node)
+    }
+    
+    func handleMouseDown(with theEvent: NSEvent) {
+        guard let view = gameView else {
+            fatalError("Scene not created")
+        }
+        
+        guard let overlayScene = view.overlaySKScene else {
+            print("No overlay scene")
+            return
+        }
+        
+        let location:CGPoint = theEvent.location(in: overlayScene)
+        let node:SKNode = overlayScene.atPoint(location)
+        if let name = node.name { // Check if node name is not nil
+            if(name == "cameraNode") {
+                print("Clicked camera node")
+                gameView.allowsCameraControl = true
+                return
             }
-            
-            material.emission.contents = NSColor.red
-            
-            SCNTransaction.commit()
+            else if(name == "toolNode") {
+                print("Clicked tool node")
+                gameView.allowsCameraControl = false
+                return
+            }
+        }
+        
+        if (!gameView.allowsCameraControl) {
+            self.applyDeformToMesh(theEvent)
         }
     }
+    
+    func handleMouseUp(with theEvent: NSEvent) {
+        
+    }
+    
+    func handleMouseDragged(with theEvent: NSEvent) {
+        if (!gameView.allowsCameraControl) {
+            self.applyDeformToMesh(theEvent)
+        }
+    }
+    
+    func handleKeyDown(with: NSEvent) {
+        
+    }
+    
+    func handleKeyUp(with: NSEvent) {
+        
+    }
+    
+    func applyDeformToMesh(_ theEvent:NSEvent) {
+        print("Applying deform")
+        var point = theEvent.locationInWindow
+        point = gameView.convert(point, from: nil)
+        
+        let hitTest = gameView.hitTest(point, options: nil)
+        if !hitTest.isEmpty {
+            let node = hitTest[0].node
+            if(node.name == "terrain") {
+                let terrain = node.parent as! TerrainNode
+                print("Local coordinates are :\(hitTest[0].localCoordinates)")
+                let val = UInt32(theEvent.modifierFlags.rawValue) & UInt32(NSEvent.ModifierFlags.option.rawValue)
+                terrain.deformTerrainAt(hitTest[0].localCoordinates, brushRadius:0.25, intensity:0.025 * (val > 0 ? -1.0 : 1.0))
+
+            }
+        }
+    }
+    
 }

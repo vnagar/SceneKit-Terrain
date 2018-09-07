@@ -12,6 +12,9 @@
 		95DAC1C121420ABA008D55D6 /* art.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = 95DAC1C021420ABA008D55D6 /* art.scnassets */; };
 		95DAC1C321420ABD008D55D6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 95DAC1C221420ABD008D55D6 /* Assets.xcassets */; };
 		95DAC1C621420ABD008D55D6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 95DAC1C421420ABD008D55D6 /* Main.storyboard */; };
+		95DAC1CF21420B13008D55D6 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95DAC1CE21420B13008D55D6 /* GameView.swift */; };
+		95DAC1D1214210F8008D55D6 /* TerrainNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95DAC1D0214210F8008D55D6 /* TerrainNode.swift */; };
+		95DAC1D3214211AA008D55D6 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95DAC1D2214211AA008D55D6 /* Utils.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +26,9 @@
 		95DAC1C521420ABD008D55D6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		95DAC1C721420ABD008D55D6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		95DAC1C821420ABD008D55D6 /* SceneKit_Terrain.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SceneKit_Terrain.entitlements; sourceTree = "<group>"; };
+		95DAC1CE21420B13008D55D6 /* GameView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		95DAC1D0214210F8008D55D6 /* TerrainNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerrainNode.swift; sourceTree = "<group>"; };
+		95DAC1D2214211AA008D55D6 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,7 +61,10 @@
 		95DAC1BB21420ABA008D55D6 /* SceneKit-Terrain */ = {
 			isa = PBXGroup;
 			children = (
+				95DAC1D0214210F8008D55D6 /* TerrainNode.swift */,
+				95DAC1D2214211AA008D55D6 /* Utils.swift */,
 				95DAC1BC21420ABA008D55D6 /* AppDelegate.swift */,
+				95DAC1CE21420B13008D55D6 /* GameView.swift */,
 				95DAC1BE21420ABA008D55D6 /* GameViewController.swift */,
 				95DAC1C021420ABA008D55D6 /* art.scnassets */,
 				95DAC1C221420ABD008D55D6 /* Assets.xcassets */,
@@ -137,8 +146,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				95DAC1D3214211AA008D55D6 /* Utils.swift in Sources */,
 				95DAC1BF21420ABA008D55D6 /* GameViewController.swift in Sources */,
+				95DAC1CF21420B13008D55D6 /* GameView.swift in Sources */,
 				95DAC1BD21420ABA008D55D6 /* AppDelegate.swift in Sources */,
+				95DAC1D1214210F8008D55D6 /* TerrainNode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
