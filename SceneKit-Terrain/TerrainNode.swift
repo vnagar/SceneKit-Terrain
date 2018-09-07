@@ -33,11 +33,8 @@ class TerrainNode : SCNNode {
         super.init()
         
         let geometry = createGeometry(material:material)
-        let terrainNode = SCNNode(geometry: geometry)
-        terrainNode.geometry = geometry
-        terrainNode.name = "terrain"
-        
-        self.addChildNode(terrainNode)
+        self.geometry = geometry
+        self.name = "terrain"
     }
     
     init(heightMap: String, material:SCNMaterial) {
@@ -58,11 +55,8 @@ class TerrainNode : SCNNode {
         super.init()
 
         let geometry = createGeometry(material:material)
-        let terrainNode = SCNNode(geometry: geometry)
-        terrainNode.geometry = geometry
-        terrainNode.name = "terrain"
-
-        self.addChildNode(terrainNode)
+        self.geometry = geometry
+        self.name = "terrain"
     }
     
     required init?(coder aDecoder: NSCoder) {

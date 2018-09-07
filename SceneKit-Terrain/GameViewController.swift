@@ -31,7 +31,7 @@ class GameViewController: NSViewController, GameInputDelegate {
 
         self.createOverlayScene()
         self.configureCameraAndLighting()
-        self.addTerrain(type:.perlinnoise)
+        self.addTerrain(type:.heightmap)
     }
     
     private func addTerrain(type:TerrainType) {
@@ -51,6 +51,7 @@ class GameViewController: NSViewController, GameInputDelegate {
         } else {
             terrain = TerrainNode(width: 256, depth: 256, material: material)
         }
+        //print("TERRAIN MATERIAL:\(terrain!.geometry!.firstMaterial!)")
         if let terrain = terrain {
             terrain.position = SCNVector3Make(0, 0, 0)
             scene.rootNode.addChildNode(terrain)
@@ -158,7 +159,7 @@ class GameViewController: NSViewController, GameInputDelegate {
         if !hitTest.isEmpty {
             let node = hitTest[0].node
             if(node.name == "terrain") {
-                let terrain = node.parent as! TerrainNode
+                let terrain = node as! TerrainNode
                 print("Local coordinates are :\(hitTest[0].localCoordinates)")
                 let val = UInt32(theEvent.modifierFlags.rawValue) & UInt32(NSEvent.ModifierFlags.option.rawValue)
                 terrain.deformTerrainAt(hitTest[0].localCoordinates, brushRadius:0.25, intensity:0.025 * (val > 0 ? -1.0 : 1.0))
