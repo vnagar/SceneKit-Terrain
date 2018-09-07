@@ -22,6 +22,24 @@ class TerrainNode : SCNNode {
     let width:Int
     let depth:Int
     
+    init(width: Int, depth: Int, material:SCNMaterial) {
+        type = .perlinnoise
+        self.width = width
+        self.depth = depth
+        let generator = PerlinNoiseGenerator(seed: nil)
+        self.formula = {(x: Int32, y: Int32) in
+            return generator.valueFor(x: x, y: y)
+        }
+        super.init()
+        
+        let geometry = createGeometry(material:material)
+        let terrainNode = SCNNode(geometry: geometry)
+        terrainNode.geometry = geometry
+        terrainNode.name = "terrain"
+        
+        self.addChildNode(terrainNode)
+    }
+    
     init(heightMap: String, material:SCNMaterial) {
         
         type = .heightmap
@@ -84,6 +102,7 @@ class TerrainNode : SCNNode {
                 let topRightZ = heightFromMap(x: Int(x+1), y: Int(y+1)) / CGFloat(scale)
                 let bottomLeftZ = heightFromMap(x: Int(x), y: Int(y)) / CGFloat(scale)
                 let bottomRightZ = heightFromMap(x: Int(x+1), y: Int(y)) / CGFloat(scale)
+                //print("\(topLeftZ), \(topRightZ), \(bottomLeftZ), \(bottomRightZ)")
                 
                 let topLeft = SCNVector3Make(CGFloat(x)-CGFloat(factor), CGFloat(topLeftZ), CGFloat(y)+CGFloat(factor))
                 let topRight = SCNVector3Make(CGFloat(x)+CGFloat(factor), CGFloat(topRightZ), CGFloat(y)+CGFloat(factor))
@@ -152,7 +171,7 @@ class TerrainNode : SCNNode {
             }
             
             let val = formula!(Int32(x), Int32(y))
-            return CGFloat(val)
+            return CGFloat(val/32.0)
         }
     }
 

@@ -11,7 +11,6 @@ import SpriteKit
 import QuartzCore
 
 class GameViewController: NSViewController, GameInputDelegate {
-    
         
     @IBOutlet var gameView: GameView!
     let scene = SCNScene()
@@ -32,10 +31,10 @@ class GameViewController: NSViewController, GameInputDelegate {
 
         self.createOverlayScene()
         self.configureCameraAndLighting()
-        self.addTerrain()
+        self.addTerrain(type:.perlinnoise)
     }
     
-    private func addTerrain() {
+    private func addTerrain(type:TerrainType) {
         let material = SCNMaterial()
         material.diffuse.contents = "art.scnassets/textures/grass.jpg"
         material.isDoubleSided = false
@@ -46,9 +45,16 @@ class GameViewController: NSViewController, GameInputDelegate {
         material.diffuse.contentsTransform = SCNMatrix4MakeScale(CGFloat(16), CGFloat(16), 1)
         material.diffuse.intensity = 1.0
         
-        let terrain = TerrainNode(heightMap: "art.scnassets/textures/heightmap.png", material:material)
-        terrain.position = SCNVector3Make(0, 0, 0)
-        scene.rootNode.addChildNode(terrain)
+        var terrain:TerrainNode?
+        if(type == .heightmap) {
+            terrain = TerrainNode(heightMap: "art.scnassets/textures/heightmap.png", material:material)
+        } else {
+            terrain = TerrainNode(width: 256, depth: 256, material: material)
+        }
+        if let terrain = terrain {
+            terrain.position = SCNVector3Make(0, 0, 0)
+            scene.rootNode.addChildNode(terrain)
+        }
     }
     
     private func configureCameraAndLighting() {
@@ -145,7 +151,6 @@ class GameViewController: NSViewController, GameInputDelegate {
     }
     
     func applyDeformToMesh(_ theEvent:NSEvent) {
-        print("Applying deform")
         var point = theEvent.locationInWindow
         point = gameView.convert(point, from: nil)
         
