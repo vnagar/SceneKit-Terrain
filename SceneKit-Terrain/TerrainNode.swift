@@ -8,6 +8,15 @@
 
 import SceneKit
 
+struct MeshRange {
+    var min:CGFloat
+    var max:CGFloat
+}
+struct MeshCount {
+    var one:Int
+    var two:Int
+}
+
 enum TerrainType: Int {
     case heightmap = 0
     case perlinnoise = 1
@@ -67,7 +76,8 @@ class TerrainNode : SCNNode {
         print("Intensity is \(intensity)")
     }
     
-    private func createGeometry(material:SCNMaterial) -> SCNGeometry {
+    /*
+    private func createGeometry1(material:SCNMaterial) -> SCNGeometry {
         let cint: CInt = 0
         let sizeOfCInt = MemoryLayout.size(ofValue: cint)
         let float: Float = 0.0
@@ -90,7 +100,7 @@ class TerrainNode : SCNNode {
         var vertexCount = 0
         let factor: CGFloat = 0.5
         
-        for y in 0...Int(h-2) {
+        for y in 0...Int(h-1) {
             for x in 0...Int(w-1) {
                 let topLeftZ = heightFromMap(x: Int(x), y: Int(y+1)) / CGFloat(scale)
                 let topRightZ = heightFromMap(x: Int(x+1), y: Int(y+1)) / CGFloat(scale)
@@ -137,6 +147,10 @@ class TerrainNode : SCNNode {
         
         for normalIndex in 0...vertexCount-1 {
             normals[normalIndex] = SCNVector3Make(0, 0, -1)
+            let from = vertices[normalIndex]
+            let to = vertices[normalIndex] + normals[normalIndex] * 4.0
+            let node = Utils.createLine(from: from, to: to)
+            self.addChildNode(node)
         }
         sources.append(SCNGeometrySource(normals: normals))
         
@@ -150,6 +164,7 @@ class TerrainNode : SCNNode {
         return _terrainGeometry
         
     }
+    */
     
     private func heightFromMap(x:Int, y:Int) -> CGFloat {
         if(type == .heightmap) {
@@ -168,5 +183,133 @@ class TerrainNode : SCNNode {
             return CGFloat(val/32.0)
         }
     }
+    
+    private func createGeometry(material:SCNMaterial) -> SCNGeometry {
+        let rangeOne = MeshRange(min: -CGFloat(width)/CGFloat(2), max: CGFloat(width)/CGFloat(2))
+        let rangeTwo = MeshRange(min: -CGFloat(depth)/CGFloat(2), max: CGFloat(depth)/CGFloat(2))
+        let textureRepeatCounts = MeshCount(one: 1, two: 1)
+        
+        let pointCount = width * depth;
+        
+        var vertices: Array<SCNVector3> = Array(repeating: SCNVector3Zero, count: pointCount)
+        var normals: Array<SCNVector3> = Array(repeating: SCNVector3Zero, count: pointCount)
+        var textures: Array<CGPoint> = Array(repeating: CGPoint.zero, count: pointCount)
+        
+        var numberOfIndices = (2*width)*(depth);
+        if (depth%4==0) {
+            numberOfIndices += 2;
+        }
+        
+        var indices: Array<Int32> = Array(repeating: 0, count: numberOfIndices)
+        
+        //    The indices for a mesh
+        //
+        //    (1)━━━(2)━━━(3)━━━(4)
+        //     ┃   ◥ ┃   ◥ ┃   ◥ ┃
+        //     ┃  ╱  ┃  ╱  ┃  ╱  ┃
+        //     ▼ ╱   ▼ ╱   ▼ ╱   ▼
+        //    (4)━━━(5)━━━(6)━━━(7)⟳  nr 7 twice
+        //     ┃ ◤   ┃ ◤   ┃ ◤   ┃
+        //     ┃  ╲  ┃  ╲  ┃  ╲  ┃
+        //     ┃   ╲ ┃   ╲ ┃   ╲ ┃
+        //  ⟳(8)━━━(9)━━━(10)━━(11)   nr 8 twice
+        //     ┃   ◥ ┃   ◥ ┃   ◥ ┃
+        //     ┃  ╱  ┃  ╱  ┃  ╱  ┃
+        //     ▼ ╱   ▼ ╱   ▼ ╱   ▼
+        //    (12)━━(13)━━(14)━━(15)
+        
+        var lastIndex = 0;
+        for row in 0..<(width-1) {
+            let isEven = row%2 == 0;
+            for col in 0..<depth {
+                
+                if (isEven) {
+                    indices[lastIndex] = Int32(row*width + col)
+                    lastIndex = lastIndex + 1
+                    indices[lastIndex] = Int32((row+1)*width + col)
+                    if (col == depth-1) {
+                        lastIndex = lastIndex + 1
+                        indices[lastIndex] = Int32((row+1)*width + col)
+                    }
+                } else {
+                    indices[lastIndex] = Int32(row*width + (depth-1-col))
+                    lastIndex = lastIndex + 1
+                    indices[lastIndex] = Int32((row+1)*width + (depth-1-col))
+                    if (col == depth-1) {
+                        lastIndex = lastIndex + 1
+                        indices[lastIndex] = Int32((row+1)*width + (depth-1-col))
+                    }
+                }
+                lastIndex = lastIndex + 1
+            }
+        }
+        
+        // Generate the mesh by calculating the vector, normal
+        // and texture coordinate for each x,z pair.
+        
+        for row in 0..<width {
+            for col in 0..<depth {
+                
+                let one = CGFloat(CGFloat(col)/CGFloat(width-1)) * CGFloat(rangeOne.max - rangeOne.min) + CGFloat(rangeOne.min)
+                let two = CGFloat(CGFloat(row)/CGFloat(depth-1)) * CGFloat(rangeTwo.max - rangeTwo.min) + CGFloat(rangeTwo.min)
+                print("one is \(one), two is \(two)")
+                
+                let value = self.vectorForFunction(one:one, two:two, offset1:rangeOne.min, offset2:rangeTwo.min)
+                
+                vertices[col + row*depth] = value;
+                
+                //let delta = CGFloat(0.001)
+                let delta = CGFloat(1.0)
+                let dx = value - self.vectorForFunction(one:one+delta, two:two, offset1:rangeOne.min, offset2:rangeTwo.min)
+                
+                let dz = value - self.vectorForFunction(one:one, two:two+delta, offset1:rangeOne.min, offset2:rangeTwo.min)
+                
+                
+                let crossProductVector = dz.cross(vector: dx)
+                normals[col + row*depth] = crossProductVector.normalize()
+                
+                
+                textures[col + row*depth] = CGPoint(x:CGFloat(col)/CGFloat(width)*CGFloat(textureRepeatCounts.one),
+                                                    y:CGFloat(row)/CGFloat(depth)*CGFloat(textureRepeatCounts.two))
+                
+            }
+        }
+        
+        // Create geometry sources for the generated data
+        let vertexSource = SCNGeometrySource(vertices: vertices)
+        let normalSource = SCNGeometrySource(normals:normals)
+        let textureSource = SCNGeometrySource(textureCoordinates:textures)
+        
+        // Configure the indices that was to be interpreted as a
+        // triangle strip using
+        let element = SCNGeometryElement(indices: indices, primitiveType: .triangleStrip)
+        
+        // Create geometry from these sources
+        let geometry = SCNGeometry(sources:[vertexSource, normalSource, textureSource] , elements: [element])
+        
+        // Since the builder exposes a geometry with repeating texture
+        // coordinates it is configured with a repeating material
+        
+        geometry.materials = [material];
+        
+        /*
+         for normalIndex in 0...normals.count-1 {
+         let from = vertices[normalIndex]
+         let to = vertices[normalIndex] + normals[normalIndex] * 1.0
+         let node = Utils.createLine(from: from, to: to)
+         self.addChildNode(node)
+         }
+         */
+        
+        return geometry;
+        
+    }
 
+    private func vectorForFunction(one:CGFloat, two:CGFloat, offset1:CGFloat, offset2:CGFloat) -> SCNVector3
+    {
+        let x = one
+        let y = CGFloat(heightFromMap(x: Int(one-offset1), y: Int(two-offset2)))
+        let z = two
+        return SCNVector3Make(x, y, z)
+    }
 }

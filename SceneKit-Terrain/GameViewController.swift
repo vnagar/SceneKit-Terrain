@@ -23,6 +23,7 @@ class GameViewController: NSViewController, GameInputDelegate {
         scnView.eventsDelegate = self
         scnView.allowsCameraControl = true
         scnView.showsStatistics = true
+        //scnView.debugOptions = [.showWireframe]
         scnView.backgroundColor = NSColor.black
         
         // configure the scene
@@ -31,7 +32,7 @@ class GameViewController: NSViewController, GameInputDelegate {
 
         self.createOverlayScene()
         self.configureCameraAndLighting()
-        self.addTerrain(type:.heightmap)
+        self.addTerrain(type:.perlinnoise)
     }
     
     private func addTerrain(type:TerrainType) {
@@ -66,13 +67,13 @@ class GameViewController: NSViewController, GameInputDelegate {
         scene.rootNode.addChildNode(cameraNode)
         
         // place the camera
-        cameraNode.position = SCNVector3(x: 128, y: 10, z: 128)
+        cameraNode.position = SCNVector3(x: 16, y: 8, z: 16)
         
         // create and add a light to the scene
         let lightNode = SCNNode()
         lightNode.light = SCNLight()
         lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 128, y: 20, z: 10)
+        lightNode.position = SCNVector3(x: 16, y: 10, z: 16)
         scene.rootNode.addChildNode(lightNode)
         
         // create and add an ambient light to the scene
