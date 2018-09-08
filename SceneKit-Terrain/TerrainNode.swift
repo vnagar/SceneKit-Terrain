@@ -16,7 +16,6 @@ struct MeshCount {
     var one:Int
     var two:Int
 }
-
 enum TerrainType: Int {
     case heightmap = 0
     case perlinnoise = 1
@@ -24,14 +23,13 @@ enum TerrainType: Int {
 typealias TerrainFormula = ((Int32, Int32) -> (Double))
 
 class TerrainNode : SCNNode {
-    var pixels = [[Pixel]]()
     var _meshVertices:[SCNVector3] = [SCNVector3]()
     var _indices:[Int32] = [Int32]()
     var _textures:[CGPoint] = [CGPoint]()
     var _normals:[SCNVector3] = [SCNVector3]()
-
-
     var _material:SCNMaterial
+    
+    var pixels = [[Pixel]]()
     var formula: TerrainFormula?
 
     let type:TerrainType
@@ -49,8 +47,7 @@ class TerrainNode : SCNNode {
         }
         super.init()
         
-        let geometry = createGeometry(material:material)
-        self.geometry = geometry
+        self.geometry = createGeometry(material:material)
         self.name = "terrain"
     }
     
@@ -70,8 +67,7 @@ class TerrainNode : SCNNode {
         
         super.init()
 
-        let geometry = createGeometry(material:material)
-        self.geometry = geometry
+        self.geometry = createGeometry(material:material)
         self.name = "terrain"
     }
     
@@ -83,10 +79,7 @@ class TerrainNode : SCNNode {
         let rangeOne = MeshRange(min: -CGFloat(width)/CGFloat(2), max: CGFloat(width)/CGFloat(2))
         let rangeTwo = MeshRange(min: -CGFloat(depth)/CGFloat(2), max: CGFloat(depth)/CGFloat(2))
         let radiusInIndices = brushRadius * Double(width)
-        /*
-        let vx = Double(width) * Double(location.x)
-        let vy = Double(width) * Double(location.z)
-        */
+        
         let vx = Double(location.x)
         let vy = Double(location.z)
         
@@ -116,99 +109,8 @@ class TerrainNode : SCNNode {
         self.geometry = deformGeometry(material:_material)
     }
     
-    /*
-    private func createGeometry1(material:SCNMaterial) -> SCNGeometry {
-        let cint: CInt = 0
-        let sizeOfCInt = MemoryLayout.size(ofValue: cint)
-        let float: Float = 0.0
-        let sizeOfFloat = MemoryLayout.size(ofValue: float)
-        let vec2: vector_float2 = vector2(0, 0)
-        let sizeOfVecFloat = MemoryLayout.size(ofValue: vec2)
-        
-        let w: CGFloat = CGFloat(width)
-        let h: CGFloat = CGFloat(depth)
-        let scale: Double = Double(1.0)
-        
-        var sources = [SCNGeometrySource]()
-        var elements = [SCNGeometryElement]()
-        
-        let maxElements: Int = width * depth * 4
-        var vertices = [SCNVector3](repeating:SCNVector3Zero, count:maxElements)
-        var normals = [SCNVector3](repeating:SCNVector3Zero, count:maxElements)
-        var uvList: [vector_float2] = []
-        
-        var vertexCount = 0
-        let factor: CGFloat = 0.5
-        
-        for y in 0...Int(h-1) {
-            for x in 0...Int(w-1) {
-                let topLeftZ = heightFromMap(x: Int(x), y: Int(y+1)) / CGFloat(scale)
-                let topRightZ = heightFromMap(x: Int(x+1), y: Int(y+1)) / CGFloat(scale)
-                let bottomLeftZ = heightFromMap(x: Int(x), y: Int(y)) / CGFloat(scale)
-                let bottomRightZ = heightFromMap(x: Int(x+1), y: Int(y)) / CGFloat(scale)
-                //print("\(topLeftZ), \(topRightZ), \(bottomLeftZ), \(bottomRightZ)")
-                
-                let topLeft = SCNVector3Make(CGFloat(x)-CGFloat(factor), CGFloat(topLeftZ), CGFloat(y)+CGFloat(factor))
-                let topRight = SCNVector3Make(CGFloat(x)+CGFloat(factor), CGFloat(topRightZ), CGFloat(y)+CGFloat(factor))
-                let bottomLeft = SCNVector3Make(CGFloat(x)-CGFloat(factor), CGFloat(bottomLeftZ), CGFloat(y)-CGFloat(factor))
-                let bottomRight = SCNVector3Make(CGFloat(x)+CGFloat(factor), CGFloat(bottomRightZ), CGFloat(y)-CGFloat(factor))
-                
-                vertices[vertexCount] = bottomLeft
-                vertices[vertexCount+1] = topLeft
-                vertices[vertexCount+2] = topRight
-                vertices[vertexCount+3] = bottomRight
-                
-                let xf = CGFloat(x)
-                let yf = CGFloat(y)
-                
-                uvList.append(vector_float2(Float(xf/w), Float(yf/h)))
-                uvList.append(vector_float2(Float(xf/w), Float((yf+factor)/h)))
-                uvList.append(vector_float2(Float((xf+factor)/w), Float((yf+factor)/h)))
-                uvList.append(vector_float2(Float((xf+factor)/w), Float(yf/h)))
-                
-                vertexCount += 4
-            }
-        }
-        
-        let source = SCNGeometrySource(vertices: vertices)
-        sources.append(source)
-        
-        let geometryData = NSMutableData()
-        
-        var geometry: CInt = 0
-        while (geometry < CInt(vertexCount)) {
-            let bytes: [CInt] = [geometry, geometry+2, geometry+3, geometry, geometry+1, geometry+2]
-            geometryData.append(bytes, length: sizeOfCInt*6)
-            geometry += 4
-        }
-        
-        let element = SCNGeometryElement(data: geometryData as Data, primitiveType: .triangles, primitiveCount: vertexCount/2, bytesPerIndex: sizeOfCInt)
-        elements.append(element)
-        
-        for normalIndex in 0...vertexCount-1 {
-            normals[normalIndex] = SCNVector3Make(0, 0, -1)
-            let from = vertices[normalIndex]
-            let to = vertices[normalIndex] + normals[normalIndex] * 4.0
-            let node = Utils.createLine(from: from, to: to)
-            self.addChildNode(node)
-        }
-        sources.append(SCNGeometrySource(normals: normals))
-        
-        let uvData = NSData(bytes: uvList, length: uvList.count * sizeOfVecFloat)
-        let uvSource = SCNGeometrySource(data: uvData as Data, semantic: SCNGeometrySource.Semantic.texcoord, vectorCount: uvList.count, usesFloatComponents: true, componentsPerVector: 2, bytesPerComponent: sizeOfFloat, dataOffset: 0, dataStride: sizeOfVecFloat)
-        sources.append(uvSource)
-        
-        let _terrainGeometry = SCNGeometry(sources: sources, elements: elements)
-        _terrainGeometry.materials = [material]
-        
-        return _terrainGeometry
-        
-    }
-    */
-    
     private func heightFromMap(x:Int, y:Int) -> CGFloat {
         if(type == .heightmap) {
-            //print("Getting height of pixel:\(x),\(y)")
             if(x<0 || y < 0 || x>=width || y>=depth) {
                 return 0.0
             }
@@ -218,7 +120,6 @@ class TerrainNode : SCNNode {
             if (formula == nil) {
                 return 0.0
             }
-            
             let val = formula!(Int32(x), Int32(y))
             return CGFloat(val/32.0)
         }
@@ -327,9 +228,7 @@ class TerrainNode : SCNNode {
         // Create geometry from these sources
         let geometry = SCNGeometry(sources:[vertexSource, normalSource, textureSource] , elements: [element])
         
-        // Since the builder exposes a geometry with repeating texture
-        // coordinates it is configured with a repeating material
-        
+        //Save the geometry for future use.
         _meshVertices = vertices
         _indices = indices
         _textures = textures
@@ -338,11 +237,9 @@ class TerrainNode : SCNNode {
         geometry.materials = [material];
         
         return geometry;
-        
     }
 
-    private func vectorForFunction(one:CGFloat, two:CGFloat, offset1:CGFloat, offset2:CGFloat) -> SCNVector3
-    {
+    private func vectorForFunction(one:CGFloat, two:CGFloat, offset1:CGFloat, offset2:CGFloat) -> SCNVector3 {
         let x = one
         let y = CGFloat(heightFromMap(x: Int(one-offset1), y: Int(two-offset2)))
         let z = two
@@ -351,18 +248,16 @@ class TerrainNode : SCNNode {
     
     private func deformGeometry(material:SCNMaterial) -> SCNGeometry {
         
-        // Create geometry sources for the generated data
+        // TODO: Recompute normals??
         let vertexSource = SCNGeometrySource(vertices: _meshVertices)
         let normalSource = SCNGeometrySource(normals:_normals)
         let textureSource = SCNGeometrySource(textureCoordinates:_textures)
         
-        // Configure the indices that was to be interpreted as a
-        // triangle strip using
+        // Configure the indices that was to be interpreted as a triangle strip using
         let element = SCNGeometryElement(indices: _indices, primitiveType: .triangleStrip)
         
         // Create geometry from these sources
         let geometry = SCNGeometry(sources:[vertexSource, normalSource, textureSource] , elements: [element])
-        
         geometry.materials = [material];
         
         return geometry;

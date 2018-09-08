@@ -160,7 +160,6 @@ class GameViewController: NSViewController, GameInputDelegate {
             let node = hitTest[0].node
             if(node.name == "terrain") {
                 let terrain = node as! TerrainNode
-                print("Local coordinates are :\(hitTest[0].localCoordinates)")
                 let val = UInt32(theEvent.modifierFlags.rawValue) & UInt32(NSEvent.ModifierFlags.option.rawValue)
                 terrain.deformTerrainAt(hitTest[0].localCoordinates, brushRadius:0.10, intensity:0.1 * (val > 0 ? -1.0 : 1.0))
 
