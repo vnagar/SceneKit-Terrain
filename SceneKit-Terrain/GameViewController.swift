@@ -52,6 +52,19 @@ class GameViewController: NSViewController, GameInputDelegate {
         } else {
             terrain = TerrainNode(width: 256, depth: 256, material: material)
         }
+        
+        if let terrainMaterial = terrain?.geometry?.firstMaterial {
+            let dirt_texture = SCNMaterialProperty(contents: "art.scnassets/textures/dirt.jpg")
+            let grass_texture = SCNMaterialProperty(contents:"art.scnassets/textures/grass.jpg")
+            
+            terrainMaterial.setValue(grass_texture, forKeyPath: "grassTexture")
+            terrainMaterial.setValue(dirt_texture, forKeyPath: "dirtTexture")
+            
+            let res = Bundle.main.path(forResource: "terrain", ofType: "shader", inDirectory:"art.scnassets/shaders")
+            let surfaceModifier = try? String(contentsOfFile: res!)
+            terrainMaterial.shaderModifiers = [SCNShaderModifierEntryPoint.surface: surfaceModifier!]
+        }
+        
         if let terrain = terrain {
             terrain.position = SCNVector3Make(0, 0, 0)
             scene.rootNode.addChildNode(terrain)
