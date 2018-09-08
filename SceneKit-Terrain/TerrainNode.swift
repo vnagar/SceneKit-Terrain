@@ -25,6 +25,13 @@ typealias TerrainFormula = ((Int32, Int32) -> (Double))
 
 class TerrainNode : SCNNode {
     var pixels = [[Pixel]]()
+    var _meshVertices:[SCNVector3] = [SCNVector3]()
+    var _indices:[Int32] = [Int32]()
+    var _textures:[CGPoint] = [CGPoint]()
+    var _normals:[SCNVector3] = [SCNVector3]()
+
+
+    var _material:SCNMaterial
     var formula: TerrainFormula?
 
     let type:TerrainType
@@ -33,6 +40,7 @@ class TerrainNode : SCNNode {
     
     init(width: Int, depth: Int, material:SCNMaterial) {
         type = .perlinnoise
+        _material = material
         self.width = width
         self.depth = depth
         let generator = PerlinNoiseGenerator(seed: nil)
@@ -47,9 +55,8 @@ class TerrainNode : SCNNode {
     }
     
     init(heightMap: String, material:SCNMaterial) {
-        
         type = .heightmap
-
+        _material = material
         if let imagePath = Bundle.main.path(forResource:heightMap, ofType:nil) {
             guard let image = GameImage(contentsOfFile: imagePath) else {
                 fatalError("Cannot read heightmap data")
@@ -73,7 +80,40 @@ class TerrainNode : SCNNode {
     }
     
     func deformTerrainAt(_ location:SCNVector3, brushRadius:Double, intensity:Double) {
-        print("Intensity is \(intensity)")
+        let rangeOne = MeshRange(min: -CGFloat(width)/CGFloat(2), max: CGFloat(width)/CGFloat(2))
+        let rangeTwo = MeshRange(min: -CGFloat(depth)/CGFloat(2), max: CGFloat(depth)/CGFloat(2))
+        let radiusInIndices = brushRadius * Double(width)
+        /*
+        let vx = Double(width) * Double(location.x)
+        let vy = Double(width) * Double(location.z)
+        */
+        let vx = Double(location.x)
+        let vy = Double(location.z)
+        
+        for y in 0..<depth {
+            for x in 0..<width {
+                let one = CGFloat(CGFloat(x)/CGFloat(width-1)) * CGFloat(rangeOne.max - rangeOne.min) + CGFloat(rangeOne.min)
+                let two = CGFloat(CGFloat(y)/CGFloat(depth-1)) * CGFloat(rangeTwo.max - rangeTwo.min) + CGFloat(rangeTwo.min)
+                //print("one is \(one), two is \(two)")
+                
+                let xDelta = vx - Double(one)
+                let yDelta = vy - Double(two)
+                let dist = sqrt((xDelta * xDelta) + (yDelta * yDelta));
+                
+                if (dist < radiusInIndices)
+                {
+                    let index = (y * width) + x;
+                    
+                    var relativeIntensity = 1.0 - (dist / radiusInIndices)
+                    
+                    relativeIntensity = sin(relativeIntensity * Double.pi/2)
+                    relativeIntensity *= intensity;
+                    
+                    _meshVertices[index].y += CGFloat(relativeIntensity)
+                }
+            }
+        }
+        self.geometry = deformGeometry(material:_material)
     }
     
     /*
@@ -252,11 +292,11 @@ class TerrainNode : SCNNode {
                 
                 let one = CGFloat(CGFloat(col)/CGFloat(width-1)) * CGFloat(rangeOne.max - rangeOne.min) + CGFloat(rangeOne.min)
                 let two = CGFloat(CGFloat(row)/CGFloat(depth-1)) * CGFloat(rangeTwo.max - rangeTwo.min) + CGFloat(rangeTwo.min)
-                print("one is \(one), two is \(two)")
+                //print("one is \(one), two is \(two)")
                 
                 let value = self.vectorForFunction(one:one, two:two, offset1:rangeOne.min, offset2:rangeTwo.min)
                 
-                vertices[col + row*depth] = value;
+                vertices[col + row*depth] = value
                 
                 //let delta = CGFloat(0.001)
                 let delta = CGFloat(1.0)
@@ -290,16 +330,12 @@ class TerrainNode : SCNNode {
         // Since the builder exposes a geometry with repeating texture
         // coordinates it is configured with a repeating material
         
-        geometry.materials = [material];
+        _meshVertices = vertices
+        _indices = indices
+        _textures = textures
+        _normals = normals
         
-        /*
-         for normalIndex in 0...normals.count-1 {
-         let from = vertices[normalIndex]
-         let to = vertices[normalIndex] + normals[normalIndex] * 1.0
-         let node = Utils.createLine(from: from, to: to)
-         self.addChildNode(node)
-         }
-         */
+        geometry.materials = [material];
         
         return geometry;
         
@@ -311,5 +347,25 @@ class TerrainNode : SCNNode {
         let y = CGFloat(heightFromMap(x: Int(one-offset1), y: Int(two-offset2)))
         let z = two
         return SCNVector3Make(x, y, z)
+    }
+    
+    private func deformGeometry(material:SCNMaterial) -> SCNGeometry {
+        
+        // Create geometry sources for the generated data
+        let vertexSource = SCNGeometrySource(vertices: _meshVertices)
+        let normalSource = SCNGeometrySource(normals:_normals)
+        let textureSource = SCNGeometrySource(textureCoordinates:_textures)
+        
+        // Configure the indices that was to be interpreted as a
+        // triangle strip using
+        let element = SCNGeometryElement(indices: _indices, primitiveType: .triangleStrip)
+        
+        // Create geometry from these sources
+        let geometry = SCNGeometry(sources:[vertexSource, normalSource, textureSource] , elements: [element])
+        
+        geometry.materials = [material];
+        
+        return geometry;
+        
     }
 }
