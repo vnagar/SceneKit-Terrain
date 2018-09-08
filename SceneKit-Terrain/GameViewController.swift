@@ -37,7 +37,7 @@ class GameViewController: NSViewController, GameInputDelegate {
     
     private func addTerrain(type:TerrainType) {
         let material = SCNMaterial()
-        material.diffuse.contents = "art.scnassets/textures/grass.jpg"
+        material.diffuse.contents = "art.scnassets/textures/SeamlessGrass.jpg"
         material.isDoubleSided = false
         material.isLitPerPixel = true
         material.diffuse.magnificationFilter = .none
@@ -54,8 +54,8 @@ class GameViewController: NSViewController, GameInputDelegate {
         }
         
         if let terrainMaterial = terrain?.geometry?.firstMaterial {
-            let dirt_texture = SCNMaterialProperty(contents: "art.scnassets/textures/dirt.jpg")
-            let grass_texture = SCNMaterialProperty(contents:"art.scnassets/textures/grass.jpg")
+            let dirt_texture = SCNMaterialProperty(contents: "art.scnassets/textures/Cliff.jpg")
+            let grass_texture = SCNMaterialProperty(contents:"art.scnassets/textures/SeamlessGrass.jpg")
             
             terrainMaterial.setValue(grass_texture, forKeyPath: "grassTexture")
             terrainMaterial.setValue(dirt_texture, forKeyPath: "dirtTexture")

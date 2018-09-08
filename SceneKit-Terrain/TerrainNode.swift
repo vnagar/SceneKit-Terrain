@@ -113,7 +113,7 @@ class TerrainNode : SCNNode {
             if(x<0 || y < 0 || x>=width || y>=depth) {
                 return 0.0
             }
-            return pixels[x][y].intensity * 50.0
+            return pixels[x][y].intensity * 40.0
         } else {
             // Perlin Noise
             if (formula == nil) {
