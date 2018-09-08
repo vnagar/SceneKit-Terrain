@@ -87,7 +87,6 @@ class TerrainNode : SCNNode {
             for x in 0..<width {
                 let one = CGFloat(CGFloat(x)/CGFloat(width-1)) * CGFloat(rangeOne.max - rangeOne.min) + CGFloat(rangeOne.min)
                 let two = CGFloat(CGFloat(y)/CGFloat(depth-1)) * CGFloat(rangeTwo.max - rangeTwo.min) + CGFloat(rangeTwo.min)
-                //print("one is \(one), two is \(two)")
                 
                 let xDelta = vx - Double(one)
                 let yDelta = vy - Double(two)
@@ -142,23 +141,6 @@ class TerrainNode : SCNNode {
         }
         
         var indices: Array<Int32> = Array(repeating: 0, count: numberOfIndices)
-        
-        //    The indices for a mesh
-        //
-        //    (1)━━━(2)━━━(3)━━━(4)
-        //     ┃   ◥ ┃   ◥ ┃   ◥ ┃
-        //     ┃  ╱  ┃  ╱  ┃  ╱  ┃
-        //     ▼ ╱   ▼ ╱   ▼ ╱   ▼
-        //    (4)━━━(5)━━━(6)━━━(7)⟳  nr 7 twice
-        //     ┃ ◤   ┃ ◤   ┃ ◤   ┃
-        //     ┃  ╲  ┃  ╲  ┃  ╲  ┃
-        //     ┃   ╲ ┃   ╲ ┃   ╲ ┃
-        //  ⟳(8)━━━(9)━━━(10)━━(11)   nr 8 twice
-        //     ┃   ◥ ┃   ◥ ┃   ◥ ┃
-        //     ┃  ╱  ┃  ╱  ┃  ╱  ┃
-        //     ▼ ╱   ▼ ╱   ▼ ╱   ▼
-        //    (12)━━(13)━━(14)━━(15)
-        
         var lastIndex = 0;
         for row in 0..<(width-1) {
             let isEven = row%2 == 0;
@@ -193,7 +175,6 @@ class TerrainNode : SCNNode {
                 
                 let one = CGFloat(CGFloat(col)/CGFloat(width-1)) * CGFloat(rangeOne.max - rangeOne.min) + CGFloat(rangeOne.min)
                 let two = CGFloat(CGFloat(row)/CGFloat(depth-1)) * CGFloat(rangeTwo.max - rangeTwo.min) + CGFloat(rangeTwo.min)
-                //print("one is \(one), two is \(two)")
                 
                 let value = self.vectorForFunction(one:one, two:two, offset1:rangeOne.min, offset2:rangeTwo.min)
                 
@@ -247,7 +228,6 @@ class TerrainNode : SCNNode {
     }
     
     private func deformGeometry(material:SCNMaterial) -> SCNGeometry {
-        
         // TODO: Recompute normals??
         let vertexSource = SCNGeometrySource(vertices: _meshVertices)
         let normalSource = SCNGeometrySource(normals:_normals)
@@ -261,6 +241,5 @@ class TerrainNode : SCNNode {
         geometry.materials = [material];
         
         return geometry;
-        
     }
 }

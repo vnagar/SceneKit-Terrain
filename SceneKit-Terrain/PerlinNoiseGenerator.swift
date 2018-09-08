@@ -1,6 +1,6 @@
 //
 //  PerlinNoiseGenerator.swift
-//  FirstPersonShooter
+//  SceneKit-Terrain
 //
 //  Created by Vivek Nagar on 8/10/16.
 //  Copyright © 2016 Vivek Nagar. All rights reserved.
